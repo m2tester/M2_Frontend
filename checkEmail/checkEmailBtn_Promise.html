@@ -1,0 +1,73 @@
+<script>
+  (function () {
+    // 檢查Eamil按鈕
+    var eamilInputContainer = document.querySelector(
+      "#customer_account_fields #main"
+    );
+    console.log(eamilInputContainer);
+
+    var checkEmailBtn = document.createElement("button");
+    checkEmailBtn.innerHTML = "檢查Email是否已存在";
+    checkEmailBtn.type = "button";
+    checkEmailBtn.id = "checkEmailBtn";
+
+    var checkEmailBtnBlock = document.createElement("div");
+    checkEmailBtnBlock.id = "checkEmailButton";
+    checkEmailBtnBlock.style.display = "inline-block";
+    checkEmailBtnBlock.style.overflow = "auto";
+    checkEmailBtnBlock.appendChild(checkEmailBtn);
+
+    eamilInputContainer.appendChild(checkEmailBtnBlock);
+
+    function checkEmailAvailability(email) {
+      var apiUrl =
+        "http://devbk243.mrliving.com.tw/admin_qybght/rest/default/V1/customers/isEmailAvailable";
+
+      // token
+      var token = "wcfvnx1xmkl0flra9g3rkwrmrvdd4fob";
+
+      // 設定 API 請求
+      var payload = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        body: JSON.stringify({ customerEmail: email }),
+      };
+
+      try {
+        fetch(apiUrl, payload)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            if (data) {
+              alert("此電子郵件地址可用");
+            } else {
+              alert("此電子郵件地址已被使用");
+            }
+          })
+          .catch(function (error) {
+            console.error("Error:", error);
+          });
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    }
+
+    // 執行檢查
+    checkEmailBtn.onclick = function () {
+      var emailValue = document.querySelector("#email").value;
+      console.log(emailValue);
+      if (emailValue == "") return alert("請輸入Email");
+      checkEmailAvailability(emailValue);
+    };
+  })();
+</script>
+
+<style>
+  #addNoCustomerButton {
+    margin: 0 20px;
+  }
+</style>

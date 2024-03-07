@@ -1,0 +1,384 @@
+<link
+  href="/static/frontend/Mrl/mrl_luma/zh_Hant_TW/css/emoji.min.css"
+  rel="stylesheet"
+/>
+
+<script>
+  (function () {
+    var emailInput;
+    var currentUrl = window.location.href;
+    console.log(currentUrl);
+
+    var eamilInputContainer = document.querySelector(
+      "#customer_account_fields #main"
+    );
+
+    function emailAutoComplete(emailInputSelector, containerSelector) {
+      emailInput = document.querySelector(emailInputSelector);
+      console.log(emailInput);
+      var AddNewCusForm = document.querySelector(containerSelector);
+      var AddNewCusEmailPos = AddNewCusForm.children[0];
+      var currentText = "";
+      var formContainer = document.createElement("div");
+
+      formContainer.id = "emailOptions";
+      formContainer.classList.add("email-options");
+      AddNewCusForm.insertBefore(formContainer, AddNewCusEmailPos.nextSibling);
+
+      emailInput.addEventListener("input", function () {
+        this.value = this.value.trim();
+        showDomainOptions(emailInput);
+      });
+      // 防止使用者輸入多於空格
+      emailInput.addEventListener("keyup", function (e) {
+        if (e.key === " ") {
+          this.value = this.value.trim();
+        }
+      });
+
+      emailInput.addEventListener("paste", function (e) {
+        var clipboardData = event.clipboardData || window.clipboardData;
+        var pastedData = clipboardData.getData("Text");
+
+        this.value = pastedData.replace(/\s/g, "");
+        event.preventDefault();
+      });
+    }
+
+    //輸入"@"後出現網域選項
+    function showDomainOptions(emailInput) {
+      var emailOptions = document.getElementById("emailOptions");
+      var atIndex = emailInput.value.indexOf("@");
+
+      if (atIndex !== -1) {
+        currentText = emailInput.value.substring(0, atIndex + 1);
+        var domains = [
+          "gmail.com",
+          "yahoo.com.tw",
+          "hotmail.com",
+          "icloud.com",
+          "msn.com",
+        ];
+        var optionsHTML = "";
+
+        domains.forEach(function (domain) {
+          optionsHTML +=
+            '<div class="' +
+            domain.split(".")[0] +
+            '">' +
+            currentText +
+            domain +
+            "</div>";
+        });
+
+        emailOptions.innerHTML = optionsHTML;
+        emailOptions.style.display = "block";
+
+        addOptionClickListeners(emailOptions);
+      } else {
+        emailOptions.style.display = "none";
+      }
+
+      document.addEventListener("click", hideDomainOptions);
+    }
+
+    function addOptionClickListeners(emailOptions) {
+      var optionDivs = emailOptions.querySelectorAll("div");
+
+      optionDivs.forEach(function (option) {
+        option.addEventListener("click", function () {
+          fillEmailOption(this);
+          storeEmailValue = emailInput.value;
+        });
+      });
+    }
+
+    function hideDomainOptions() {
+      document.getElementById("emailOptions").style.display = "none";
+    }
+
+    //選擇網域後代入
+    function fillEmailOption(clickedElement) {
+      var domainOption = clickedElement.textContent.replace(/^\s+|\s+$/g, "");
+      var lastAtIndex = domainOption.lastIndexOf("@");
+
+      domain = domainOption.slice(lastAtIndex + 1);
+      emailInput.value = (currentText + domain).replace(/^\s+|\s+$/g, "");
+      emailInput.dispatchEvent(
+        new MouseEvent("change", {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        })
+      );
+
+      var emailOptions = document.getElementById("emailOptions");
+      emailOptions.style.display = "none";
+    }
+
+    //判斷不同Page觸發
+    if (currentUrl.includes("/customer")) {
+      var targetEl = waitForElm('[name="customer[email]"]', 30000);
+      targetEl
+        .then(function (el) {
+          console.log("emailInput已取得target");
+          emailAutoComplete(
+            '[name="customer[email]"]',
+            "fieldset > div:nth-child(9) > div.admin__field-control"
+          );
+          addNoCustomerEmail();
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    }
+    if (currentUrl.includes("/sales/order_create")) {
+      var targetEl = waitForElm("#email", 30000);
+      targetEl
+        .then(function (el) {
+          console.log("emailInput已取得target");
+          emailAutoComplete(
+            "#email",
+            "#main > div.admin__field.field.field-email.required._required > .admin__field-control"
+          );
+          checkEmail();
+          addNoCustomerEmail();
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    }
+
+    //監聽元素出現
+    function waitForElm(selector, timeout, doc) {
+      var scopeDoc = doc || document;
+
+      var promise = new Promise(function (resolve, reject) {
+        var el = scopeDoc.querySelector(selector);
+        if (el) {
+          return resolve(el);
+        }
+
+        targetObserver = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            var targetEl = null;
+            var parentElement = mutation.target.parentElement || scopeDoc;
+            if (parentElement) {
+              targetEl = parentElement.querySelector(selector);
+            }
+
+            if (targetEl) {
+              resolve(targetEl);
+              targetObserver.disconnect();
+              return;
+            }
+          });
+        });
+
+        targetObserver.observe(scopeDoc, {
+          childList: true,
+          subtree: true,
+        });
+
+        setTimeout(function () {
+          reject("載入超時");
+          targetObserver.disconnect();
+        }, timeout || 30000);
+      });
+
+      return promise;
+    }
+
+    function checkEmail() {
+      //現有客戶頁面不顯示檢查按鈕
+      var pageTitle = document.querySelector(".page-title");
+      if (
+        pageTitle.textContent.includes("for") ||
+        pageTitle.textContent.includes("中的")
+      ) {
+        return;
+      }
+
+      // 檢查Eamil按鈕
+      console.log(eamilInputContainer);
+      var targetElement = document.querySelector(".field-email ");
+
+      var checkEmailBtn = document.createElement("button");
+      checkEmailBtn.innerHTML = "檢查Email是否已存在";
+      checkEmailBtn.type = "button";
+      checkEmailBtn.id = "checkEmailBtn";
+
+      var checkEmailBtnBlock = document.createElement("div");
+      checkEmailBtnBlock.id = "checkEmailButton";
+      checkEmailBtnBlock.style.display = "inline-block";
+      checkEmailBtnBlock.style.overflow = "auto";
+      checkEmailBtnBlock.appendChild(checkEmailBtn);
+
+      eamilInputContainer.appendChild(checkEmailBtnBlock);
+
+      //result icon
+      var iconCheck = document.createElement("i");
+      iconCheck.id = "resultIcon";
+      iconCheck.classList.add("em");
+      iconCheck.alt = "檢查結果";
+      iconCheck.style.verticalAlign = "super";
+      iconCheck.ariaLabel = "HEAVY LARGE CIRCLE";
+      iconCheck.ariaRole = "presentation";
+
+      targetElement.parentNode.insertBefore(
+        iconCheck,
+        targetElement.nextSibling
+      );
+
+      function checkEmailAvailability(email) {
+        var apiUrl = "/rest/default/V1/customers/isEmailAvailable";
+
+        // token
+        var token = "wcfvnx1xmkl0flra9g3rkwrmrvdd4fob";
+
+        // 設定 API 請求
+        var payload = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ customerEmail: email }),
+        };
+
+        try {
+          fetch(apiUrl, payload)
+            .then(function (response) {
+              return response.json();
+            })
+            .then(function (data) {
+              if (iconCheck.classList.contains("fade-in")) {
+                iconCheck.classList.remove("fade-in");
+              }
+              iconCheck.classList.add("fade-in");
+
+              if (
+                data ||
+                document.querySelector("#email").value ==
+                  "09xxxxxxxx@mrliving.com.tw"
+              ) {
+                iconCheck.classList.remove("em-x");
+                iconCheck.classList.add("em-white_check_mark");
+              } else {
+                iconCheck.classList.remove("em-white_check_mark");
+                iconCheck.classList.add("em-x");
+                alert("此電子郵件地址已被使用");
+              }
+            })
+            .catch(function (error) {
+              console.error("Error:", error);
+            });
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+
+      // 執行檢查
+      checkEmailBtn.onclick = function () {
+        var emailValue = document.querySelector("#email").value;
+        console.log(emailValue);
+        if (emailValue == "") {
+          return alert("請輸入Email");
+        }
+        checkEmailAvailability(emailValue);
+      };
+    }
+
+    //新增客戶沒有信箱按鈕
+    function addNoCustomerEmail() {
+      console.log("開單或是新建客戶要加上一個按鈕-客戶沒有信箱");
+      var btn = document.createElement("button");
+      btn.innerHTML = "客戶沒有信箱";
+      btn.type = "button";
+      btn.name = "btnNoEmail";
+      btn.onclick = function () {
+        var txt = "09xxxxxxxx@mrliving.com.tw";
+        var emailById = document.getElementById("email");
+        if (emailById !== null) emailById.value = txt;
+
+        var emailByName = document.querySelector(
+          'input[name="customer[email]"]'
+        );
+        if (emailByName !== null) emailByName.value = txt;
+      };
+
+      var divBlock = document.createElement("div");
+      divBlock.id = "addNoCustomerButton";
+      divBlock.style.display = "inline-block";
+      divBlock.style.overflow = "auto";
+      divBlock.appendChild(btn);
+
+      var hasDiv = document.querySelector("#addNoCustomerButton");
+      // 後台開單頁才有的規格
+      var customerEmailInOrder = document.querySelector("#checkEmailButton");
+      if (customerEmailInOrder !== null && hasDiv === null) {
+        // 判斷是否有已有選客戶，有的話不顯示按鈕
+        if (document.getElementById("email").value == "")
+          customerEmailInOrder.after(divBlock);
+        customerEmailInOrder.appendChild(divBlock);
+      }
+
+      // 後台新增客戶才有的規格
+      var customerEmailInCustomer = document.querySelector(
+        'div[data-index="email"] input'
+      );
+      console.log(customerEmailInCustomer);
+      console.log("customerEmailInCustomer", customerEmailInCustomer);
+      if (customerEmailInCustomer !== null && hasDiv === null) {
+        customerEmailInCustomer.after(divBlock);
+      }
+    }
+  })();
+</script>
+
+<style>
+  .email-options {
+    cursor: pointer;
+    display: none;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    border-radius: 10px;
+    margin: 0 0 10px;
+  }
+
+  .gmail:hover,
+  .yahoo:hover,
+  .hotmail:hover,
+  .icloud:hover,
+  .msn:hover {
+    color: aliceblue;
+    background-color: #386bd6;
+    transition: linear 0.2s;
+  }
+
+  .gmail,
+  .yahoo,
+  .hotmail,
+  .icloud,
+  .msn {
+    padding: 2px 10px;
+  }
+
+  #addNoCustomerButton {
+    margin: 0 20px;
+    vertical-align: middle;
+  }
+
+  #checkEmailBtn {
+    background-color: #f0c418;
+  }
+
+  #resultIcon {
+    width: 25px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  #resultIcon.fade-in {
+    margin: 0 5px;
+    opacity: 1;
+  }
+</style>

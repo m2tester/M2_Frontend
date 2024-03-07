@@ -1,0 +1,29 @@
+<script>
+  (function () {
+    var userEmail = document.querySelector(
+      "#sales_order_view_tabs_order_info_content div.admin__page-section-item.order-account-information tbody > tr:nth-child(2) a"
+    ).textContent;
+
+    function removeFromLocalStorage(key) {
+      var data = JSON.parse(localStorage.getItem(key)) || {};
+
+      var hasUserEmail = data.hasOwnProperty(userEmail);
+
+      if (hasUserEmail) {
+        delete data[userEmail];
+        localStorage.setItem(key, JSON.stringify(data));
+      } else {
+        return false;
+      }
+      return hasUserEmail;
+    }
+
+    if (localStorage.getItem("allUserData")) {
+      removeFromLocalStorage("allUserData");
+      removeFromLocalStorage("allCachedItemIDs");
+      removeFromLocalStorage("allItemData");
+    } else {
+      console.log("目前無暫存資料");
+    }
+  })();
+</script>

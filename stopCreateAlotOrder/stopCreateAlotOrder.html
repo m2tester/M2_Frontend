@@ -1,0 +1,27 @@
+<script>
+  function checkAndSetOrderCreateTab() {
+    var targetUrl = "/order_create";
+    var storedUrl = localStorage.getItem("orderCreateTab");
+
+    if (storedUrl && storedUrl.includes(targetUrl)) {
+      alert("已有開啟的新增訂單頁面，請勿同時新增不同的訂單。");
+      window.close();
+      return;
+    } else {
+      localStorage.setItem("orderCreateTab", targetUrl);
+      window.addEventListener("beforeunload", function () {
+        clearOrderCreateTab();
+      });
+    }
+  }
+
+  function clearOrderCreateTab() {
+    var storedTab = localStorage.getItem("orderCreateTab");
+
+    if (storedTab.includes("/order_create")) {
+      localStorage.removeItem("orderCreateTab");
+    }
+  }
+
+  checkAndSetOrderCreateTab();
+</script>
