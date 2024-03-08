@@ -717,11 +717,19 @@
     }
 
     //移除已選產品
+    var remeveSelectItemNum = 0;
     function removeSelectItem() {
       var existProductArr = [];
       var existProduct = document.querySelectorAll(
         "#order-items td.col-product > span"
       );
+      // var itemCount = document.querySelectorAll("#order-items_grid > table > tbody > tr > td.col-qty > input");
+      // console.log(itemCount)
+      // var count = 0;
+      // itemCount.forEach(function(e){
+      //   count = count + parseInt(e.value)
+      // })
+
       if (existProduct) {
         for (var i = 0; i < existProduct.length; i++) {
           var itemId = existProduct[i].id.match(/\d+/).toString();
@@ -729,9 +737,9 @@
         }
         console.log(existProductArr);
         existProductArr.forEach(function (id) {
+          remeveSelectItemNum++;
           order.removeQuoteItem(id);
         });
-
         existProductArr = [];
       }
     }
@@ -846,120 +854,93 @@
         option.addEventListener("click", function (e) {
           var selectedIndex = option.getAttribute("data-index");
           var selectedEmail = storedData[selectedIndex].email;
-          var waitRemoveItem = new Promise(function (resolve, reject) {
-            removeSelectItem();
-            return resolve();
-          });
-          waitRemoveItem.then(function () {
-            //判斷是否覆蓋資料
-            if (
-              document.querySelector("#email").value !== selectedEmail &&
-              document.querySelector("#email").value !== ""
-            ) {
-              console.log("覆蓋資料");
-              document.getElementById("userDataDialog").innerHTML =
-                coverDataConfirm();
-              document.querySelector("#userDataDialog").style.cursor = "unset";
-              document.querySelector("#userDataDialog").style.opacity = "1";
-
-              document
-                .querySelector("#userDataDialog .sureBtn")
-                .addEventListener("click", function () {
+          //判斷是否覆蓋資料
+          if (
+            document.querySelector("#email").value !== selectedEmail &&
+            document.querySelector("#email").value !== ""
+          ) {
+            document.getElementById("userDataDialog").innerHTML =
+              coverDataConfirm();
+            document.querySelector("#userDataDialog").style.cursor = "unset";
+            document.querySelector("#userDataDialog").style.opacity = "1";
+            document
+              .querySelector("#userDataDialog .closeBtn")
+              .addEventListener("click", function () {
+                userDataDialog.close();
+                document.getElementById("userDataDialog").innerHTML =
+                  "<h2>還原客戶暫存資料</h2> " +
+                  "<div id='popupContent'></div>" +
+                  "<button id='closeDialogBtn'>關閉</button>";
+              });
+            document
+              .querySelector("#userDataDialog .sureBtn")
+              .addEventListener("click", function () {
+                console.log("覆蓋資料");
+                var waitRemoveItem = new Promise(function (resolve, reject) {
+                  removeSelectItem();
+                  return resolve();
+                });
+                waitRemoveItem.then(function () {
+                  order.loadArea(["items"], true, {});
+                  console.log("已刪除存在產品,開始進行還原");
                   restoreLastSelectedProduct(selectedEmail);
                   selectUserData(storedData[selectedIndex]);
-                  var cacheditemIDs = JSON.parse(
-                    localStorage.getItem("allCachedItemIDs")
-                  );
-
-                  if (!(selectedEmail in cacheditemIDs)) {
-                    userDataDialog.close();
-                    setTimeout(function () {
-                      order.loadArea(
-                        [
-                          "items",
-                          "shipping_method",
-                          "totals",
-                          "billing_method",
-                        ],
-                        true,
-                        {}
-                      );
-                    }, 3000);
-                    return console.log("暫存的商品資料不存在");
+                  setTimeout(function () {
+                    order.loadArea(["items"], true, {});
+                    waitForElm("#order-items_grid .col-row-from-date-1").then(
+                      function () {
+                        // debugger;
+                        console.log("還原完成");
+                        restoreItemData(selectedEmail);
+                      }
+                    );
+                  }, 1000 * remeveSelectItemNum);
+                  console.log(1 * remeveSelectItemNum + "秒後還原完成");
+                  remeveSelectItemNum = 0;
+                  userDataDialog.close();
+                  document.getElementById("userDataDialog").innerHTML =
+                    "<h2>還原客戶暫存資料</h2> " +
+                    "<div id='popupContent'></div>" +
+                    "<button id='closeDialogBtn'>關閉</button>";
+                });
+              });
+          } else {
+            selectUserData(storedData[selectedIndex]);
+            if (selectedEmail) {
+              console.log(emailField.value);
+              if (document.querySelector("#email").value === emailField.value) {
+                var waitRemoveItem = new Promise(function (resolve, reject) {
+                  removeSelectItem();
+                  return resolve();
+                });
+                waitRemoveItem.then(function () {
+                  restoreLastSelectedProduct(selectedEmail);
+                  setTimeout(function () {
+                    order.loadArea(["items"], true, {});
+                    waitForElm("#order-items_grid .col-row-from-date-1").then(
+                      function () {
+                        // debugger;
+                        console.log("還原完成");
+                        restoreItemData(selectedEmail);
+                      }
+                    );
+                  }, 1000 * remeveSelectItemNum);
+                  console.log(1 * remeveSelectItemNum + "秒後還原完成");
+                  remeveSelectItemNum = 0;
+                });
+                return console.log("選取資料email與原本相同,不進行刪除與還原");
+              } else {
+                restoreLastSelectedProduct(selectedEmail);
+                waitForElm("#order-items_grid .col-row-from-date-1").then(
+                  function (elm) {
+                    console.log("還原完成");
+                    restoreItemData(selectedEmail);
                   }
-
-                  setTimeout(function () {
-                    order
-                      .loadArea(
-                        [
-                          "items",
-                          "shipping_method",
-                          "totals",
-                          "billing_method",
-                        ],
-                        true,
-                        {}
-                      )
-                      .then(function () {
-                        // debugger;
-                        restoreItemData(selectedEmail);
-                        console.log("還原完成");
-                      });
-                  }, 7000);
-
-                  userDataDialog.close();
-                  document.getElementById("userDataDialog").innerHTML =
-                    "<h2>還原客戶暫存資料</h2> " +
-                    "<div id='popupContent'></div>" +
-                    "<button id='closeDialogBtn'>關閉</button>";
-                });
-
-              document
-                .querySelector("#userDataDialog .closeBtn")
-                .addEventListener("click", function () {
-                  userDataDialog.close();
-                  document.getElementById("userDataDialog").innerHTML =
-                    "<h2>還原客戶暫存資料</h2> " +
-                    "<div id='popupContent'></div>" +
-                    "<button id='closeDialogBtn'>關閉</button>";
-                });
-            } else {
-              selectUserData(storedData[selectedIndex]);
-              if (selectedEmail) {
-                if (selectedEmail === emailField.value) {
-                  // removeSelectItem();
-                  restoreLastSelectedProduct(selectedEmail);
-                  setTimeout(function () {
-                    order
-                      .loadArea(
-                        [
-                          "items",
-                          "shipping_method",
-                          "totals",
-                          "billing_method",
-                        ],
-                        true,
-                        {}
-                      )
-                      .then(function () {
-                        // debugger;
-                        restoreItemData(selectedEmail);
-                        console.log("還原完成");
-                      });
-                  }, 5000);
-                } else {
-                  restoreLastSelectedProduct(selectedEmail);
-                  waitForElm("#order-items_grid .col-row-from-date-1").then(
-                    function (elm) {
-                      restoreItemData(selectedEmail);
-                      console.log("還原完成");
-                    }
-                  );
-                }
+                );
               }
-              userDataDialog.close();
             }
-          });
+            userDataDialog.close();
+          }
         });
       });
 
