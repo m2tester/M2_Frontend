@@ -1,0 +1,17 @@
+<script>
+  //開單頁面，檢查是否有暫存的email資料，有的話自動填入並搜尋
+  (function () {
+    var tempEmailData = localStorage.getItem("currentEmailInput");
+
+    if (tempEmailData) {
+      var emailInput = document.querySelector(
+        "#sales_order_create_customer_grid_filter_email"
+      );
+      emailInput.value = tempEmailData;
+      document
+        .querySelector(".action-default.scalable.action-secondary")
+        .click();
+      localStorage.removeItem("currentEmailInput");
+    }
+  })();
+</script>
