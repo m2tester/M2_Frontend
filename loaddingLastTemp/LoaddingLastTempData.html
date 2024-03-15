@@ -469,7 +469,9 @@
         if (field === null || field === undefined) {
           return;
         }
-
+        if (fieldId === "order-billing_address_lastname") {
+          autoTriggerDefalut();
+        }
         if (fieldId === "order-billing_address_city_id") {
           fieldId = "order-billing_address_city";
           userData.data[fieldId] = fields[fieldId].value;
@@ -480,6 +482,7 @@
           );
           if (!checkQuote) {
             updateStoredDataOnEmailChange(currentPreviousEmail, email);
+            alert("原儲存資料的Email已被更改，已自動更新暫存資料");
           }
         } else {
           if (field.type === "radio") {
@@ -542,7 +545,6 @@
     addPtFormObserver.observe(addPtForm, config);
 
     var addProductBtn = document.querySelector("#add_products");
-
     add_products.addEventListener("click", function () {
       var productItems = document.querySelectorAll(
         "#sales_order_create_search_grid_table tr"
@@ -697,7 +699,7 @@
 
       setTimeout(function () {
         document.querySelector("#mrl_update_attributes").click();
-      }, 1000);
+      }, 2000);
     }
 
     //監聽添加產品的"套用"按鈕出現
@@ -1019,6 +1021,7 @@
           var field = fields[dataId];
           if (field) {
             if (field.type === "radio") {
+              console.log(userData.data[dataId]);
               field.checked = true;
               field.value = userData.data[dataId];
             } else if (field.type === "checkbox") {
@@ -1028,28 +1031,6 @@
             } else {
               field.value = userData.data[dataId];
             }
-          }
-        }
-      }
-
-      // 填入相關欄位資料
-      var itemID = emailField.value + "_" + lastNameField.value;
-      var cachedData = cacheditemIDs[itemID];
-      if (cachedData) {
-        // 填入產品相關欄位資料
-        var nodeListMap = {};
-        nodeListMap[itemSelector.DATE_1] = cachedData.itemDate_1;
-        nodeListMap[itemSelector.DATE_2] = cachedData.itemDate_2;
-        nodeListMap[itemSelector.NOTE] = cachedData.itemNote;
-
-        for (var selector in nodeListMap) {
-          if (nodeListMap.hasOwnProperty(selector)) {
-            var values = nodeListMap[selector];
-            var nodeList = document.querySelectorAll(selector);
-
-            nodeList.forEach(function (node, index) {
-              node.value = values[index] || "";
-            });
           }
         }
       }
@@ -1116,10 +1097,7 @@
         if (key.includes("Data") || key.includes("ID")) {
           var storedData = JSON.parse(localStorage.getItem(key));
           dataKey = Object.keys(storedData)[0];
-          console.log(dataKey);
-          console.log(storedData);
           var storedTimestamp = storedData[dataKey].timestamp;
-          console.log(storedTimestamp);
           if (storedData !== null && storedTimestamp !== undefined) {
             var now = new Date().getTime();
             if (now - storedTimestamp > 48 * 60 * 60 * 1000) {
@@ -1156,5 +1134,16 @@
     }
 
     checkDataExistTime();
+
+    //trigger defalut radio
+    function autoTriggerDefalut() {
+      var chooseContentStatus = false;
+      if (chooseContentStatus === false) {
+        var defaultChoose = document.querySelector("#exp_visited4");
+        defaultChoose.checked = false;
+        defaultChoose.click();
+        chooseContentStatus = true;
+      }
+    }
   })();
 </script>
