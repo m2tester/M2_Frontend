@@ -15,7 +15,7 @@
 
 <!-- 暫存List poppup -->
 <dialog id="userDataDialog">
-  <h2>
+  <h2 style="color: #fff">
     還原客戶暫存資料
     <span class="remonded-text"
       >(若資料在48小時內未受到編輯，將會自動刪除)</span
@@ -30,7 +30,49 @@
   <p>欄位已成功儲存!</p>
 </div>
 
+<dialog id="initBlock">
+  <div class="checkEmail">
+    <h2 style="margin: 0">請輸入客戶Email：</h2>
+    <input type="email" id="customerEmail" />
+    <button id="emailComfirm">確認</button>
+  </div>
+  <div style="margin-top: 30px">
+    <h2 style="color: #fff">
+      還原客戶暫存資料
+      <span class="remonded-text"
+        >(若資料在48小時內未受到編輯，將會自動刪除)</span
+      >
+    </h2>
+    <div id="tempDataList"></div>
+  </div>
+</dialog>
+
 <style>
+  #initBlock {
+    display: none;
+    top: 10%;
+  }
+  .checkEmail {
+    display: flex;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: solid #fff;
+  }
+  #emailComfirm {
+    position: unset;
+    margin-left: 10px;
+    background-color: #f0c418;
+    color: #514943;
+    border-radius: inherit;
+    padding: 0.6rem 1rem 0.6rem;
+    border: #adadad solid;
+  }
+  #customerEmail {
+    color: #000;
+    width: 25rem;
+    font-weight: 400;
+  }
+
   dialog {
     opacity: 0.95;
     background-color: #2c2e33;
@@ -121,23 +163,6 @@
     margin-top: 10px;
   }
 
-  .button-56 {
-    font-family: "Open Sans", sans-serif;
-    font-size: 16px;
-    letter-spacing: 2px;
-    text-decoration: none;
-    text-transform: uppercase;
-    color: #000;
-    cursor: pointer;
-    border: 3px solid;
-    padding: 0.25em 0.5em;
-    box-shadow: 1px 1px 0px 0px, 2px 2px 0px 0px, 3px 3px 0px 0px,
-      4px 4px 0px 0px, 5px 5px 0px 0px;
-    position: relative;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
-  }
   .remonded-text {
     font-size: 12px;
     color: #f4f446;
@@ -148,24 +173,18 @@
   }
   .button-53 {
     opacity: 0;
+    text-align: center;
     background-color: #2ebc4f;
     border: 0 solid #e5e7eb;
     box-sizing: border-box;
     color: #fff;
     display: flex;
-    font-family: ui-sans-serif, system-ui, -apple-system, system-ui, "Segoe UI",
-      Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
-      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-      "Noto Color Emoji";
     font-size: 1.5rem;
     font-weight: 700;
     justify-content: center;
     line-height: 1.75rem;
     padding: 0.75rem 1.65rem;
     position: fixed;
-    text-align: center;
-    text-decoration: none #000000 solid;
-    text-decoration-thickness: auto;
     width: 100%;
     max-width: 170px;
     cursor: pointer;
@@ -292,6 +311,7 @@
 </style>
 <script>
   (function () {
+    makeUserInputEmail();
     var orderTopRemind = document.querySelector("#customer_account_fields");
 
     if (orderTopRemind) {
@@ -428,7 +448,7 @@
           }
         });
 
-        var allUserData = JSON.parse(localStorage.getItem("allUserData")) || {};
+        var allUserData = getLocalStorageData("allUserData");
         allUserData[email] = userData;
         userData.timestamp = new Date().getTime();
         localStorage.setItem("allUserData", JSON.stringify(allUserData));
@@ -498,7 +518,7 @@
           }
         }
 
-        var allUserData = JSON.parse(localStorage.getItem("allUserData")) || {};
+        var allUserData = getLocalStorageData("allUserData");
         allUserData[email] = allUserData[email] || {};
         allUserData[email].email = email;
         allUserData[email].name = name;
@@ -533,7 +553,6 @@
           var productItems = document.querySelectorAll(
             "#sales_order_create_search_grid_table tr"
           );
-
           if (productItems) {
             saveItemitemID(productItems);
           }
@@ -543,13 +562,12 @@
 
     var config = { attributes: false, childList: true, subtree: false };
     addPtFormObserver.observe(addPtForm, config);
-
     var addProductBtn = document.querySelector("#add_products");
+
     add_products.addEventListener("click", function () {
       var productItems = document.querySelectorAll(
         "#sales_order_create_search_grid_table tr"
       );
-
       saveItemitemID(productItems);
     });
 
@@ -594,8 +612,7 @@
 
     // 刪除指定 itemID
     function deleteItem(itemID, cachedItem) {
-      var allCachedItemIDs =
-        JSON.parse(localStorage.getItem("allCachedItemIDs")) || {};
+      var allCachedItemIDs = getLocalStorageData("allCachedItemIDs");
       var userKey = cachedItem.email;
 
       if (userKey in allCachedItemIDs) {
@@ -617,8 +634,7 @@
 
     // 更新或添加到 allCachedItemIDs
     function updateAllCachedItemIDs(itemID, cachedItem) {
-      var allCachedItemIDs =
-        JSON.parse(localStorage.getItem("allCachedItemIDs")) || {};
+      var allCachedItemIDs = getLocalStorageData("allCachedItemIDs");
       var userKey = cachedItem.email;
 
       allCachedItemIDs[userKey] = allCachedItemIDs[userKey] || {};
@@ -662,7 +678,7 @@
 
       if (email) {
         console.log("成功儲存交期＆備註");
-        var allItemData = JSON.parse(localStorage.getItem("allItemData")) || {};
+        var allItemData = getLocalStorageData("allItemData");
         allItemData[email] = items;
         localStorage.setItem("allItemData", JSON.stringify(allItemData));
       }
@@ -670,12 +686,10 @@
 
     function restoreItemData(selectedEmail) {
       var allItemDataString = localStorage.getItem("allItemData");
-
       var allItemData = JSON.parse(allItemDataString);
 
       if (selectedEmail in allItemData) {
         var items = allItemData[selectedEmail];
-
         var nodeListMap = {};
         nodeListMap[itemSelector.DATE_1] = items && items.itemDate_1;
         nodeListMap[itemSelector.DATE_2] = items && items.itemDate_2;
@@ -772,13 +786,14 @@
           order.removeQuoteItem(id);
         });
         existProductArr = [];
+      } else {
+        return;
       }
     }
 
     //監聽元素出現
     function waitForElm(selector, doc) {
       var scopeDoc = doc || document;
-
       var promise = new Promise(function (resolve, reject) {
         var el = scopeDoc.querySelector(selector);
         if (el) {
@@ -824,9 +839,7 @@
             "Email: " +
             userData.email +
             "<br>";
-
           content += "</div>";
-
           content +=
             '<i class="em em-x deleteButton" aria-role="presentation" aria-label="CROSS MARK"></i>';
         });
@@ -858,19 +871,17 @@
       var storedData =
         Object.values(JSON.parse(localStorage.getItem("allUserData"))) || {};
       console.log("storedData" + storedData);
-
+      var userDataDialog = document.getElementById("userDataDialog");
       var popupContent = buildPopupContent(storedData);
       var popupContentElement = document.getElementById("popupContent");
       if (popupContentElement === null) {
-        document.getElementById("userDataDialog").innerHTML =
+        userDataDialog.innerHTML =
           "<h2>還原客戶暫存資料 <span class='remonded-text'>(若資料在48小時內未受到編輯，將會自動刪除)</span></h2>" +
           "<div id='popupContent'></div>" +
           "<button id='closeDialogBtn'>關閉</button>";
         popupContentElement = document.getElementById("popupContent");
       }
       popupContentElement.innerHTML = popupContent;
-
-      var userDataDialog = document.getElementById("userDataDialog");
       userDataDialog.showModal();
 
       //關閉
@@ -890,15 +901,14 @@
             document.querySelector("#email").value !== selectedEmail &&
             document.querySelector("#email").value !== ""
           ) {
-            document.getElementById("userDataDialog").innerHTML =
-              coverDataConfirm();
-            document.querySelector("#userDataDialog").style.cursor = "unset";
-            document.querySelector("#userDataDialog").style.opacity = "1";
+            userDataDialog.innerHTML = coverDataConfirm();
+            userDataDialog.style.cursor = "unset";
+            userDataDialog.style.opacity = "1";
             document
               .querySelector("#userDataDialog .closeBtn")
               .addEventListener("click", function () {
                 userDataDialog.close();
-                document.getElementById("userDataDialog").innerHTML =
+                userDataDialog.innerHTML =
                   "<h2>還原客戶暫存資料 <span class='remonded-text'>(若資料在48小時內未受到編輯，將會自動刪除)</span></h2> " +
                   "<div id='popupContent'></div>" +
                   "<button id='closeDialogBtn'>關閉</button>";
@@ -912,15 +922,15 @@
                   return resolve();
                 });
                 waitRemoveItem.then(function () {
-                  selectUserData(storedData[selectedIndex]);
                   setTimeout(function () {
                     restoreLastSelectedProduct(selectedEmail);
                     loadingMaskShow(selectedEmail);
+                    selectUserData(storedData[selectedIndex]);
                   }, 1500 * removeSelectItemNum);
                   console.log(1.5 * removeSelectItemNum + "秒後還原完成");
                   removeSelectItemNum = 0;
                   userDataDialog.close();
-                  document.getElementById("userDataDialog").innerHTML =
+                  userDataDialog.innerHTML =
                     "<h2>還原客戶暫存資料 <span class='remonded-text'>(若資料在48小時內未受到編輯，將會自動刪除)</span></h2> " +
                     "<div id='popupContent'></div>" +
                     "<button id='closeDialogBtn'>關閉</button>";
@@ -930,7 +940,6 @@
             userDataDialog.close();
             if (selectedEmail) {
               if (selectedEmail === document.getElementById("email").value) {
-                selectUserData(storedData[selectedIndex]);
                 var waitRemoveItem = new Promise(function (resolve, reject) {
                   removeSelectItem();
                   return resolve();
@@ -939,76 +948,39 @@
                   setTimeout(function () {
                     restoreLastSelectedProduct(selectedEmail);
                     loadingMaskShow(selectedEmail);
+                    selectUserData(storedData[selectedIndex]);
                   }, 1500 * removeSelectItemNum);
                   console.log(1.5 * removeSelectItemNum + "秒後還原完成");
                   removeSelectItemNum = 0;
                 });
                 return console.log("選取資料email與原本相同,不進行刪除與還原");
               } else {
-                selectUserData(storedData[selectedIndex]);
                 restoreLastSelectedProduct(selectedEmail);
                 loadingMaskShow(selectedEmail);
               }
             }
+            selectUserData(storedData[selectedIndex]);
           }
         });
       });
-
-      //刪除選項
-      document
-        .querySelector("#popupContent")
-        .addEventListener("click", function (e) {
-          if (e.target.classList.contains("deleteButton")) {
-            var index = Array.from(
-              document.querySelectorAll(".deleteButton")
-            ).indexOf(e.target);
-
-            var reStoredData =
-              JSON.parse(localStorage.getItem("allUserData")) || {};
-            var reAllCachedItemIDs =
-              JSON.parse(localStorage.getItem("allCachedItemIDs")) || {};
-            var reAllItemData =
-              JSON.parse(localStorage.getItem("allItemData")) || {};
-
-            var dataKeys = Object.keys(reStoredData);
-
-            if (index >= 0) {
-              var userEmail = dataKeys[index];
-              delete reStoredData[userEmail];
-
-              if (userEmail in reAllCachedItemIDs) {
-                delete reAllCachedItemIDs[userEmail];
-                localStorage.setItem(
-                  "allCachedItemIDs",
-                  JSON.stringify(reAllCachedItemIDs)
-                );
-              }
-              if (userEmail in reAllItemData) {
-                delete reAllItemData[userEmail];
-                localStorage.setItem(
-                  "allItemData",
-                  JSON.stringify(reAllItemData)
-                );
-              }
-              if (Object.keys(reStoredData).length > 0) {
-                localStorage.setItem(
-                  "allUserData",
-                  JSON.stringify(reStoredData)
-                );
-              } else {
-                localStorage.removeItem("allUserData");
-              }
-
-              showStoredDataDialog();
-            }
-          }
-        });
+      optionsDelete(); //刪除選項
     }
 
     //暫存List用戶數據填入
     function selectUserData(userData) {
+      //初始化表單值
       for (var id in fields) {
-        fields[id].value = "";
+        if (fields.hasOwnProperty(id)) {
+          if (fields[id].type === "radio") {
+            fields[id].checked = false;
+          } else if (fields[id].type === "checkbox") {
+            fields[id].checked = false;
+          } else if (fields[id].type === "fieldset") {
+            fields[id].querySelector("textarea").value = "";
+          } else {
+            fields[id].value = "";
+          }
+        }
       }
 
       var emailField = document.querySelector("#email");
@@ -1025,7 +997,9 @@
               field.checked = true;
               field.value = userData.data[dataId];
             } else if (field.type === "checkbox") {
-              field.checked = userData.data[dataId];
+              if (!field.id.includes("test333")) {
+                field.checked = userData.data[dataId];
+              }
             } else if (field.type === "fieldset") {
               field.querySelector("textarea").value = userData.data[dataId];
             } else {
@@ -1038,10 +1012,9 @@
 
     // 更改用戶email時更新暫存商品資料
     function updateStoredDataOnEmailChange(oldEmail, newEmail) {
-      var allUserData = JSON.parse(localStorage.getItem("allUserData")) || {};
-      var allItemData = JSON.parse(localStorage.getItem("allItemData")) || {};
-      var allCachedItemIDs =
-        JSON.parse(localStorage.getItem("allCachedItemIDs")) || {};
+      var allUserData = getLocalStorageData("allUserData");
+      var allItemData = getLocalStorageData("allItemData");
+      var allCachedItemIDs = getLocalStorageData("allCachedItemIDs");
 
       if (oldEmail in allItemData && oldEmail in allCachedItemIDs) {
         var oldUserData = allUserData[oldEmail];
@@ -1110,17 +1083,14 @@
     }
 
     function removeExtraData() {
-      var allUserData = JSON.parse(localStorage.getItem("allUserData")) || {};
-      var allItemData = JSON.parse(localStorage.getItem("allItemData")) || {};
-      var allCachedItemIDs =
-        JSON.parse(localStorage.getItem("allCachedItemIDs")) || {};
-
+      var allUserData = getLocalStorageData("allUserData");
+      var allItemData = getLocalStorageData("allItemData");
+      var allCachedItemIDs = getLocalStorageData("allCachedItemIDs");
       for (var userKey in allItemData) {
         if (!allUserData.hasOwnProperty(userKey)) {
           delete allItemData[userKey];
         }
       }
-
       for (var userKey in allCachedItemIDs) {
         if (!allUserData.hasOwnProperty(userKey)) {
           delete allCachedItemIDs[userKey];
@@ -1135,7 +1105,7 @@
 
     checkDataExistTime();
 
-    //trigger defalut radio
+    //觸發「下單後選擇服務窗口」預設radio
     function autoTriggerDefalut() {
       var chooseContentStatus = false;
       if (chooseContentStatus === false) {
@@ -1144,6 +1114,110 @@
         defaultChoose.click();
         chooseContentStatus = true;
       }
+    }
+
+    //進入頁面時填寫email or 載入暫存資料
+    function makeUserInputEmail() {
+      var customerEmail = document.querySelector("#email");
+
+      if (customerEmail.value === "") {
+        var storedData =
+          Object.values(JSON.parse(localStorage.getItem("allUserData"))) || {};
+        var popupContent = buildPopupContent(storedData);
+        var popupContentElement = document.getElementById("tempDataList");
+        popupContentElement.innerHTML = popupContent;
+        var initBlock = document.querySelector("#initBlock");
+        initBlock.style.display = "block";
+        var inputEmail = document.querySelector("#customerEmail");
+
+        //選項點擊
+        var dialogOption = document.querySelectorAll(".dialogOption");
+        dialogOption.forEach(function (option) {
+          option.addEventListener("click", function (e) {
+            var selectedIndex = option.getAttribute("data-index");
+            var selectedEmail = storedData[selectedIndex].email;
+            restoreLastSelectedProduct(selectedEmail);
+            loadingMaskShow(selectedEmail);
+            selectUserData(storedData[selectedIndex]);
+            initBlock.style.display = "none";
+          });
+        });
+        optionsDelete(); //刪除選項
+
+        //帶入輸入的email
+        if (customerEmail.value !== null) {
+          document
+            .querySelector("#emailComfirm")
+            .addEventListener("click", function () {
+              if (inputEmail.value.trim() === "") {
+                alert("請輸入Email");
+                return;
+              }
+              customerEmail.value = inputEmail.value.trim();
+              document.querySelector("#checkEmailBtn").click();
+              initBlock.style.display = "none";
+            });
+        }
+      }
+    }
+
+    //手動刪除清單選項
+    function optionsDelete() {
+      var deleteButtons = document.querySelectorAll(".deleteButton");
+
+      deleteButtons.forEach(function (button) {
+        button.addEventListener("click", function (e) {
+          var index = Array.from(
+            document.querySelectorAll(".deleteButton")
+          ).indexOf(e.target);
+          var reStoredData = getLocalStorageData("allUserData");
+          var reAllCachedItemIDs = getLocalStorageData("allCachedItemIDs");
+          var reAllItemData = getLocalStorageData("allItemData");
+
+          var dataKeys = Object.keys(reStoredData);
+
+          if (index >= 0) {
+            var userEmail = dataKeys[index];
+            delete reStoredData[userEmail];
+
+            if (userEmail in reAllCachedItemIDs) {
+              delete reAllCachedItemIDs[userEmail];
+              localStorage.setItem(
+                "allCachedItemIDs",
+                JSON.stringify(reAllCachedItemIDs)
+              );
+            }
+            if (userEmail in reAllItemData) {
+              delete reAllItemData[userEmail];
+              localStorage.setItem(
+                "allItemData",
+                JSON.stringify(reAllItemData)
+              );
+            }
+            if (Object.keys(reStoredData).length > 0) {
+              localStorage.setItem("allUserData", JSON.stringify(reStoredData));
+            } else {
+              localStorage.removeItem("allUserData");
+            }
+          }
+          if (
+            document.querySelector("#popupContent") &&
+            !e.target.closest("#tempDataList")
+          ) {
+            showStoredDataDialog();
+          }
+          if (
+            document.querySelector("#popupContent") &&
+            !e.target.closest("#popupContent")
+          ) {
+            makeUserInputEmail();
+          }
+        });
+      });
+    }
+
+    function getLocalStorageData(key) {
+      return JSON.parse(localStorage.getItem(key)) || {};
     }
   })();
 </script>
