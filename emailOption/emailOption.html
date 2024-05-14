@@ -7,7 +7,10 @@
   (function () {
     var emailInput;
     var currentUrl = window.location.href;
-    console.log(currentUrl);
+    var userIp;
+    var originalError = console.error;
+    var originalLog = console.log;
+    getUserIP();
 
     var eamilInputContainer = document.querySelector(
       "#customer_account_fields #main"
@@ -232,11 +235,8 @@
 
       function checkEmailAvailability(email) {
         var apiUrl = "/rest/default/V1/customers/isEmailAvailable";
-
-        // token
         var token = "wcfvnx1xmkl0flra9g3rkwrmrvdd4fob";
 
-        // 設定 API 請求
         var payload = {
           method: "POST",
           headers: {
@@ -267,7 +267,11 @@
               } else {
                 iconCheck.classList.remove("em-white_check_mark");
                 iconCheck.classList.add("em-x");
-                alert("此電子郵件地址已被使用");
+                if (confirm("此電子郵件已被使用，請問是否回到客戶選擇頁面?")) {
+                  goChooseCustomerPage();
+                } else {
+                  return;
+                }
               }
             })
             .catch(function (error) {
@@ -280,6 +284,7 @@
 
       // 執行檢查
       checkEmailBtn.onclick = function () {
+        setClickCookie();
         var emailValue = document.querySelector("#email").value;
         console.log(emailValue);
         if (emailValue == "") {
@@ -333,6 +338,81 @@
         customerEmailInCustomer.after(divBlock);
       }
     }
+
+    //檢查email相同後跳轉至客戶選擇頁面
+    function goChooseCustomerPage() {
+      var currentEmailInput = document.querySelector("#email").value;
+      localStorage.setItem("currentEmailInput", currentEmailInput);
+      var resetBtn = document.querySelector("#reset_order_top_button");
+      resetBtn.addEventListener("click", function () {
+        document.querySelector(".action-accept").click();
+        document.querySelector(
+          "#sales_order_create_customer_grid_filter_email"
+        ).value = emailValue;
+      });
+      resetBtn.click();
+    }
+
+    //防止過度觸發按鈕
+    function setClickCookie() {
+      if (
+        document.cookie.split(";").some(function (item) {
+          return item.trim().indexOf("lastClickTime=") === 0;
+        })
+      ) {
+        alert("請勿連續點擊，請3秒後再試...");
+        return;
+      } else {
+        var now = new Date();
+        var expireTime = new Date(now.getTime() + 3000);
+        document.cookie =
+          "lastClickTime=" +
+          now.toUTCString() +
+          "; expires=" +
+          expireTime.toUTCString() +
+          "; path=/";
+      }
+    }
+
+    function getUserIP() {
+      fetch("https://api.ipify.org?format=json")
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          var ip = data.ip;
+          userIp = ip;
+
+          console.log(userIp);
+          // 重新定義 console.log
+          console.log = function () {
+            var currentTime = new Date().toLocaleString();
+            var args = Array.prototype.slice.call(arguments); // 將參數轉換為數組
+            args.unshift("[" + currentTime + ", " + userIp + "][INFO]:");
+            originalLog.apply(console, args);
+            var logElement = document.createElement("div");
+            logElement.textContent = args.join(" ");
+            logElement.classList.add("log");
+            document.body.appendChild(logElement);
+            // 在這裡可以加入將日誌信息發送到後端的邏輯，暫時省略
+          };
+          // 重新定義 console.error
+          console.error = function () {
+            var currentTime = new Date().toLocaleString();
+            var args = Array.prototype.slice.call(arguments);
+            args.unshift("[" + currentTime + ", " + userIp + "][ERROR]:");
+            originalError.apply(console, args);
+            var errorElement = document.createElement("div");
+            errorElement.textContent = args.join(" ");
+            errorElement.classList.add("error");
+            document.body.appendChild(errorElement);
+            // 在這裡可以加入將錯誤信息發送到後端的邏輯，暫時省略
+          };
+        })
+        .catch(function (error) {
+          console.error("Error fetching IP address:", error);
+        });
+    }
   })();
 </script>
 
@@ -380,5 +460,8 @@
   #resultIcon.fade-in {
     margin: 0 5px;
     opacity: 1;
+  }
+  .error {
+    color: red;
   }
 </style>
