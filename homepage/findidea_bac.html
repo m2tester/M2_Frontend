@@ -1,0 +1,50 @@
+<script>
+    setTimeout(function () {
+    require(['jquery','Mrl_ProductElement'], function($) {
+        mrl_prductElement.getProducts(['1018010','1018011','1018009','1018302', '1018304' ,'1017795'], $fields = 'sku,name,price,MRL_discount_price,url_key,image',$page = 1,$page_size=20)
+                .then((success) => {
+                    console.log('success', success);
+                
+                    var products = success[0].data.items;
+
+
+                    products.forEach(function(product){
+                    var productId = product.sku;
+                    var productName = product.name;
+                    var productUrl = product.url_key;
+                    var productImgPath = product.image.replace(/\\/g, '');
+                    var productDisPrice = parseInt(product.MRL_discount_price).toLocaleString();
+                    var productOldPrice = parseInt(product.price).toLocaleString();
+                    var productContainers = document.querySelectorAll('.btn[data-ga-item-id="' + productId + '"]');
+
+                        productContainers.forEach(function(productContainer){
+                        var productTitle = productContainer.querySelector('.product-title');
+                        var productdisPrice = productContainer.querySelector('.product-disPrice')
+                        var productoldPrice = productContainer.querySelector('.product-oldPrice')
+                        var productLink = productContainer.querySelector('a');
+                        var productImg = productContainer.querySelector('.itemImg');
+                        var productSource = productContainer.querySelector('source');
+                        console.log(productImg)
+                        
+                        productSource.srcset = `{{media url=catalog/product/cache/912f4218b83600a6f47af6c76f1f9667${productImgPath}}}`;
+                        productImg.src = `{{media url=catalog/product/cache/912f4218b83600a6f47af6c76f1f9667${productImgPath}}}`;
+                        productTitle.innerHTML = productName;
+                        productLink.href = 'https://www.mrliving.com.tw/' + productUrl + '.html';
+
+                        if (productDisPrice !== '0') {
+                            productoldPrice.innerHTML = '$' + productOldPrice;
+                            productdisPrice.innerHTML = '$' + productDisPrice;
+                        } else {
+                            productdisPrice.innerHTML = '$' + productOldPrice;
+                        }
+                    
+                        })
+        
+                    })
+                })
+                .catch((error)=>{
+                    console.log('error', error);
+                });
+        });
+    }, 3000);
+    </script>
